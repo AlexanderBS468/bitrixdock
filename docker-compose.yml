@@ -5,7 +5,7 @@ volumes:
     driver: local
 
 networks:
-  bitrixdock:
+  docker_for_bitrix:
 
 services:
   php:
@@ -17,11 +17,11 @@ services:
       - db
       - memcached
     environment:
-      - TZ=Europe/Moscow
+      - TZ=${TIME_ZONE}
     stdin_open: true
     tty: true
     networks:
-      - bitrixdock
+      - docker_for_bitrix
     restart: unless-stopped
   web_server:
     build: ./${WEB_SERVER_TYPE}
@@ -36,9 +36,9 @@ services:
     links:
       - php
     networks:
-      - bitrixdock
+      - docker_for_bitrix
     environment:
-      - TZ=Europe/Moscow
+      - TZ=${TIME_ZONE}
     stdin_open: true
     tty: true
     restart: unless-stopped
@@ -56,10 +56,10 @@ services:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      TZ: Europe/Moscow
+      TZ: ${TIME_ZONE}
     command: mysqld --user=root --sql-mode=""
     networks:
-      - bitrixdock
+      - docker_for_bitrix
     stdin_open: true
     tty: true
     restart: unless-stopped
@@ -71,9 +71,9 @@ services:
     ports:
       - '${INTERFACE}:11211:11211'
     networks:
-      - bitrixdock
+      - docker_for_bitrix
     environment:
-      - TZ=Europe/Moscow
+      - TZ=${TIME_ZONE}
     stdin_open: true
     tty: true
     restart: unless-stopped
@@ -86,12 +86,27 @@ services:
       - '${INTERFACE}:8080:80'
     environment:
       UPLOAD: 1024M # upload_max_filesize, post_max_size
-      TZ: Europe/Moscow
+      TZ: ${TIME_ZONE}
     restart: unless-stopped
     stdin_open: true
     tty: true
     networks:
-      - bitrixdock
+      - docker_for_bitrix
+  phpmyadmin:
+    container_name: phpMyAdmin
+    depends_on:
+      - db
+    image: phpmyadmin/phpmyadmin:latest
+    restart: unless-stopped
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+    ports:
+      - "8080:80"
+    networks:
+      - app-network
+
   source:
     image: alpine:latest
     container_name: source
@@ -103,6 +118,6 @@ services:
       - db:/var/lib/mysql
       - cache:/var/lib/memcached
       - ${SITE_PATH}:/var/www/bitrix
-      - /etc/localtime:/etc/localtime/:ro
+      - ${CERTS_PATH}:/etc/nginx/certs
     networks:
-      - bitrixdock
+      - docker_for_bitrix
