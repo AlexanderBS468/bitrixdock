@@ -5,7 +5,7 @@ volumes:
     driver: local
 
 networks:
-  docker_for_bitrix:
+  ${DOCKER_NETWORK}:
 
 services:
   php:
@@ -21,7 +21,7 @@ services:
     stdin_open: true
     tty: true
     networks:
-      - docker_for_bitrix
+      - ${DOCKER_NETWORK}
     restart: unless-stopped
   web_server:
     build: ./${WEB_SERVER_TYPE}
@@ -36,7 +36,7 @@ services:
     links:
       - php
     networks:
-      - docker_for_bitrix
+      - ${DOCKER_NETWORK}
     environment:
       - TZ=${TIME_ZONE}
     stdin_open: true
@@ -59,7 +59,7 @@ services:
       TZ: ${TIME_ZONE}
     command: mysqld --user=root --sql-mode=""
     networks:
-      - docker_for_bitrix
+      - ${DOCKER_NETWORK}
     stdin_open: true
     tty: true
     restart: unless-stopped
@@ -71,27 +71,27 @@ services:
     ports:
       - '${INTERFACE}:11211:11211'
     networks:
-      - docker_for_bitrix
+      - ${DOCKER_NETWORK}
     environment:
       - TZ=${TIME_ZONE}
     stdin_open: true
     tty: true
     restart: unless-stopped
-  adminer:
-    image: dockette/adminer:full
-    container_name: adminer
-    links:
-      - db:db
-    ports:
-      - '${INTERFACE}:8080:80'
-    environment:
-      UPLOAD: 1024M # upload_max_filesize, post_max_size
-      TZ: ${TIME_ZONE}
-    restart: unless-stopped
-    stdin_open: true
-    tty: true
-    networks:
-      - docker_for_bitrix
+#  adminer:
+#    image: dockette/adminer:full
+#    container_name: adminer
+#    links:
+#      - db:db
+#    ports:
+#      - '${INTERFACE}:8080:80'
+#    environment:
+#      UPLOAD: 1024M # upload_max_filesize, post_max_size
+#      TZ: ${TIME_ZONE}
+#    restart: unless-stopped
+#    stdin_open: true
+#    tty: true
+#    networks:
+#      - docker_for_bitrix
   phpmyadmin:
     container_name: phpMyAdmin
     depends_on:
@@ -105,7 +105,7 @@ services:
     ports:
       - "8080:80"
     networks:
-      - app-network
+      - ${DOCKER_NETWORK}
 
   source:
     image: alpine:latest
@@ -120,4 +120,4 @@ services:
       - ${SITE_PATH}:/var/www/bitrix
       - ${CERTS_PATH}:/etc/nginx/certs
     networks:
-      - docker_for_bitrix
+      - ${DOCKER_NETWORK}
